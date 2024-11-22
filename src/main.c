@@ -172,14 +172,14 @@ int main(void) {
 
         // Find the most expensive train
         struct train most_expensive_train = find_most_expensive_train();
-        printf("Most expensive train: %s %02d:%02d %s %02d:%02d %d\n\n", 
+        printf("Most expensive train: \n%s %02d:%02d %s %02d:%02d %d\n\n", 
                 city_name[most_expensive_train.from], most_expensive_train.dpt / 60, most_expensive_train.dpt % 60,
                 city_name[most_expensive_train.to], most_expensive_train.arv / 60, most_expensive_train.arv % 60,
                 most_expensive_train.fare);
 
         // Find the longest duration train
         struct train longest_duration_train = find_longest_duration_train();
-        printf("Longest duration train: %s %02d:%02d %s %02d:%02d %d\n\n", 
+        printf("Longest duration train: \n%s %02d:%02d %s %02d:%02d %d\n\n", 
                 city_name[longest_duration_train.from], longest_duration_train.dpt / 60, longest_duration_train.dpt % 60,
                 city_name[longest_duration_train.to], longest_duration_train.arv / 60, longest_duration_train.arv % 60,
                 longest_duration_train.fare);

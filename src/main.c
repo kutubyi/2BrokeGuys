@@ -164,7 +164,7 @@ void prepare_data(void) {
 int change(struct train tv[], int p, int st, int dpttime) {
     while (p >= 0) {
         if (tv[p].to == st && tv[p].arv <= dpttime) {
-            break;;
+            break;
         }
         p--;
     }
@@ -225,7 +225,7 @@ int main(void) {
         make_table(from_hakodate, HAKODATE, trains);
         printf("fr_h: \n");
         for(int i = 0; i < ncity; i++) {
-            for(int j = 0; j < nconn; j++) {
+            for(int j = 0; j < nconn+1; j++) {
                 printf("%d ", from_hakodate[i][j]);
             }
             printf("\n");
@@ -237,7 +237,7 @@ int main(void) {
         make_table(from_tokyo, TOKYO, trains);
         printf("fr_t: \n");
         for(int i = 0; i < ncity; i++) {
-            for(int j = 0; j < nconn; j++) {
+            for(int j = 0; j < nconn+1; j++) {
                 printf("%d ", from_tokyo[i][j]);
             }
             printf("\n");

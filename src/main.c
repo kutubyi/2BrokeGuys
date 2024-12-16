@@ -41,6 +41,13 @@ struct train find_longest_duration_train(void);
 struct train* find_trains_from_station(char *station_name);
 struct train* find_trains_to_station(char *station_name);
 
+// Task 2
+int cmp_arv(struct train *t1, struct train *t2);
+void prepare_data(void);
+int change(struct train tv[], int p, int st, int dpttime);
+void make_table(int v[MAXCITY][MAXCONN], int org, struct train tv[]);
+int min(int a, int b);
+
 void process_one_problem(int count) {
     char buf[100];
 
@@ -144,6 +151,48 @@ void print_train_array(struct train *trains) {
     }
 }
 
+int cmp_arv(struct train *t1, struct train *t2) {
+    return t1->arv - t2->arv;
+}
+
+// Sort the trains by arrival time
+void prepare_data(void) {
+    qsort(trains, nconn, sizeof(struct train), cmp_arv);
+}
+
+// Find next train that arrives at station st before time dpttime from train number p
+int change(struct train tv[], int p, int st, int dpttime) {
+    while (p >= 0) {
+        if (tv[p].to == st && tv[p].arv <= dpttime) {
+            break;;
+        }
+        p--;
+    }
+    return p;
+}
+
+int min(int a, int b) {
+    return (a < b) ? a : b;
+}
+
+void make_table(int v[MAXCITY][MAXCONN], int org, struct train tv[]) {
+    int ti, i, a;
+
+    for (i = 0; i < ncity; i++) {
+        v[i][0] = INFINITE;
+    }
+    v[org][0] = 0;
+
+    for (ti = 0; ti < nconn; ti++) {
+        for (i = 0; i < ncity; i++) {
+            v[i][ti+1] = v[i][ti];
+        }
+        a = change(tv, ti-1, tv[ti].from, tv[ti].dpt);
+        v[tv[ti].to][ti+1] = min(v[tv[ti].to][ti], 
+                tv[ti].fare + v[tv[ti].from][a+1]);
+    }
+}
+
 void cleanup(void) {
     memset(trains, 0, sizeof(trains));
     memset(city_name, 0, sizeof(city_name));
@@ -170,30 +219,30 @@ int main(void) {
 
         process_one_problem(count);
 
-        // Find the most expensive train
-        struct train most_expensive_train = find_most_expensive_train();
-        printf("Most expensive train: \n%s %02d:%02d %s %02d:%02d %d\n\n", 
-                city_name[most_expensive_train.from], most_expensive_train.dpt / 60, most_expensive_train.dpt % 60,
-                city_name[most_expensive_train.to], most_expensive_train.arv / 60, most_expensive_train.arv % 60,
-                most_expensive_train.fare);
+        prepare_data();
+        
+        // fr_h
+        make_table(from_hakodate, HAKODATE, trains);
+        printf("fr_h: \n");
+        for(int i = 0; i < ncity; i++) {
+            for(int j = 0; j < nconn; j++) {
+                printf("%d ", from_hakodate[i][j]);
+            }
+            printf("\n");
+        }
 
-        // Find the longest duration train
-        struct train longest_duration_train = find_longest_duration_train();
-        printf("Longest duration train: \n%s %02d:%02d %s %02d:%02d %d\n\n", 
-                city_name[longest_duration_train.from], longest_duration_train.dpt / 60, longest_duration_train.dpt % 60,
-                city_name[longest_duration_train.to], longest_duration_train.arv / 60, longest_duration_train.arv % 60,
-                longest_duration_train.fare);
-
-        // Find trains from Tokyo
-        struct train *trains_from_tokyo = find_trains_from_station("Tokyo");
-        printf("Trains from Tokyo:\n");
-        print_train_array(trains_from_tokyo);
         printf("\n");
 
-        // Find trains to Tokyo
-        struct train *trains_to_tokyo = find_trains_to_station("Tokyo");
-        printf("Trains to Tokyo:\n");
-        print_train_array(trains_to_tokyo);
+        // fr_t
+        make_table(from_tokyo, TOKYO, trains);
+        printf("fr_t: \n");
+        for(int i = 0; i < ncity; i++) {
+            for(int j = 0; j < nconn; j++) {
+                printf("%d ", from_tokyo[i][j]);
+            }
+            printf("\n");
+        }
+
         printf("\n");
 
         cleanup();

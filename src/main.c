@@ -258,9 +258,6 @@ int main(void) {
     char buf[64];
 
     while (fgets(buf, sizeof(buf), stdin) != NULL) {
-        nconn = 0;
-		ncity = 0;
-
 		sscanf(buf, "%d", &count);
 
 		if(count == 0) break;

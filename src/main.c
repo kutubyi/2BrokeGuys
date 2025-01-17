@@ -43,6 +43,8 @@ struct train* find_trains_from_station(char *station_name);
 struct train* find_trains_to_station(char *station_name);
 void print_train_array(struct train *trains);
 
+void filter_connections_in_time_range(int start_time, int end_time);
+
 int cmp_arv(struct train *t1, struct train *t2) {
     return (t1->arv - t2->arv);
 }
@@ -143,12 +145,6 @@ void parse_connection(char *buf) {
 
     sscanf(buf, "%s %d:%d %s %d:%d %d", from, &(dpt[0]), &(dpt[1]), to, &(arv[0]), (&arv[1]), &fare);
 
-    int departure_time = dpt[0] * 60 + dpt[1];
-    int arrival_time = arv[0] * 60 + arv[1];
-
-    // skip the entry if the train departs before 8:00 or arrives after 18:00
-    if (departure_time < 8 * 60 || arrival_time > 18 * 60) return;
-
     trains[nconn].from = city_id(from);
     trains[nconn].to = city_id(to);
     trains[nconn].dpt = dpt[0]*60+dpt[1];
@@ -231,6 +227,19 @@ void print_train_array(struct train *trains) {
     }
 }
 
+void filter_connections_in_time_range(int start_time, int end_time) {
+    struct train filtered_trains[MAXCONN];
+    int filtered_count = 0;
+
+    for (int i = 0; i < nconn; i++) {
+        if (trains[i].dpt >= start_time && trains[i].arv <= end_time) {
+            filtered_trains[filtered_count++] = trains[i];
+        }
+    }
+    memcpy(trains, filtered_trains, filtered_count * sizeof(struct train));
+    nconn = filtered_count;
+}
+
 void cleanup(void) {
     nconn = 0;
     ncity = 0;
@@ -260,6 +269,9 @@ int main(void) {
 			if(fgets(buf, sizeof(buf), stdin) == NULL) break;
 			parse_connection(buf);
         }
+        // Apply time filtering (e.g., 8:00 AM to 6:00 PM)
+        filter_connections_in_time_range(8 * 60, 18 * 60);
+
         int result = solve();
         printf("%d\n", result);
 

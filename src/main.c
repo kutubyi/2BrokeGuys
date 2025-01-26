@@ -1,5 +1,6 @@
 #include <stdio.h>
 #include <string.h>
+#include <stdlib.h>
 
 #define MAXCITY 100
 char city_name[MAXCITY][18];
@@ -17,14 +18,17 @@ int nconn;
 
 #define INFINITE 99999999
 
-int from_hakodate[MAXCITY][MAXCONN],
-    from_tokyo[MAXCITY][MAXCONN], 
-    to_hakodate[MAXCITY][MAXCONN],
-    to_tokyo[MAXCITY][MAXCONN];
+int from_station1[MAXCITY][MAXCONN],
+    from_station2[MAXCITY][MAXCONN], 
+    to_station1[MAXCITY][MAXCONN],
+    to_station2[MAXCITY][MAXCONN];
 
 #define BIAS (24*60)
 
-int cmp_arv(struct train *t1, struct train *t2);
+char station1[18], station2[18];
+int start, end, meeting;
+
+int cmp_arv(const void *t1, const void *t2);
 void prepare_data(void);
 int change(struct train tv[], int p, int st, int dpttime);
 void make_table(int v[MAXCITY][MAXCONN], int org, struct train tv[]);
@@ -45,8 +49,8 @@ void print_train_array(struct train *trains);
 
 void filter_connections_in_time_range(int start_time, int end_time);
 
-int cmp_arv(struct train *t1, struct train *t2) {
-    return (t1->arv - t2->arv);
+int cmp_arv(const void *t1, const void *t2) {
+    return ((struct train*)t1)->arv - ((struct train*)t2)->arv;
 }
 
 void prepare_data(void) {
@@ -96,13 +100,13 @@ int calc_cost(int city) {
 
     while(1) {
         stay = (BIAS - rtrains[d].arv) - trains[a].arv;
-        if(stay < 30) {
+        if(stay < meeting) {
             d --;
             if(d < 0) break;
             continue;
         }
-        c = from_hakodate[city][a+1] + from_tokyo[city][a+1] +
-            to_hakodate[city][d+1] + to_tokyo[city][d+1];
+        c = from_station1[city][a+1] + from_station2[city][a+1] +
+            to_station1[city][d+1] + to_station2[city][d+1];
         if(c < min_c)
             min_c = c;
         a ++;
@@ -117,10 +121,10 @@ int solve(void) {
 
     prepare_data();
 
-    make_table(from_hakodate, city_id("Hakodate"), trains);
-    make_table(from_tokyo, city_id("Tokyo"), trains);
-    make_table(to_hakodate, city_id("Hakodate"), rtrains);
-    make_table(to_tokyo, city_id("Tokyo"), rtrains);
+    make_table(from_station1, city_id(station1), trains);
+    make_table(from_station2, city_id(station2), trains);
+    make_table(to_station1, city_id(station1), rtrains);
+    make_table(to_station2, city_id(station2), rtrains);
 
     min_cost = INFINITE;
     for(c = 0; c < ncity; c++) {
@@ -247,15 +251,30 @@ void cleanup(void) {
     memset(trains, 0, sizeof(trains));
     memset(rtrains, 0, sizeof(rtrains));
 
-    memset(from_hakodate, 0, sizeof(from_hakodate));
-    memset(from_tokyo, 0, sizeof(from_tokyo));
-    memset(to_hakodate, 0, sizeof(to_hakodate));
-    memset(to_tokyo, 0, sizeof(to_tokyo));
+    memset(from_station1, 0, sizeof(from_station1));
+    memset(from_station2, 0, sizeof(from_station2));
+    memset(to_station1, 0, sizeof(to_station1));
+    memset(to_station2, 0, sizeof(to_station2));
 }
 
-int main(void) {
+int main(int argc, char *argv[]) {
     int count;
     char buf[64];
+
+    int dpt[2], arv[2];
+
+    if (argc != 6) {
+        fprintf(stderr, "Usage: %s <駅1> <駅2> <出発時刻> <帰着時刻> <面会時間>\n", argv[0]);
+        return 1;
+    }
+
+    strcpy(station1, argv[1]);
+    strcpy(station2, argv[2]);
+    sscanf(argv[3], "%d:%d", &dpt[0], &dpt[1]);
+    start = dpt[0] * 60 + dpt[1];
+    sscanf(argv[4], "%d:%d", &arv[0], &arv[1]);
+    end = arv[0] * 60 + arv[1];
+    meeting = atoi(argv[5]);
 
     while (fgets(buf, sizeof(buf), stdin) != NULL) {
 		sscanf(buf, "%d", &count);
@@ -267,7 +286,7 @@ int main(void) {
 			parse_connection(buf);
         }
         // Apply time filtering (e.g., 8:00 AM to 6:00 PM)
-        filter_connections_in_time_range(8 * 60, 18 * 60);
+        filter_connections_in_time_range(start, end);
 
         int result = solve();
         printf("%d\n", result);

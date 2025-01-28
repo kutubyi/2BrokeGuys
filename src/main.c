@@ -18,7 +18,7 @@ int nconn;
 
 #define INFINITE 99999999
 
-// Cost tables
+// cost tables
 int from_station1[MAXCITY][MAXCONN],
     from_station2[MAXCITY][MAXCONN], 
     to_station1[MAXCITY][MAXCONN],
@@ -280,7 +280,7 @@ int main(int argc, char *argv[]) {
     int dpt[2], arv[2];
 
     if (argc != 6) {
-        fprintf(stderr, "Usage: %s <駅1> <駅2> <出発時刻> <帰着時刻> <面会時間>\n", argv[0]);
+        fprintf(stderr, "Usage: %s <駅1> <駅2> <出発時刻> <帰着時刻> <面会時間> < <input_file>\n", argv[0]);
         return 1;
     }
 

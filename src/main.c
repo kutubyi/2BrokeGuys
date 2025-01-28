@@ -18,12 +18,20 @@ int nconn;
 
 #define INFINITE 99999999
 
+// Cost tables
 int from_station1[MAXCITY][MAXCONN],
     from_station2[MAXCITY][MAXCONN], 
     to_station1[MAXCITY][MAXCONN],
     to_station2[MAXCITY][MAXCONN];
 
 #define BIAS (24*60)
+
+struct result {
+    int cost;       
+    int station;     
+    int start_time;  
+    int end_time;    
+} result;
 
 char station1[18], station2[18];
 int start, end, meeting;
@@ -32,8 +40,8 @@ int cmp_arv(const void *t1, const void *t2);
 void prepare_data(void);
 int change(struct train tv[], int p, int st, int dpttime);
 void make_table(int v[MAXCITY][MAXCONN], int org, struct train tv[]);
-int calc_cost(int city);
-int solve(void);
+struct result calc_cost(int city);
+struct result solve(void);
 
 int min(int a, int b);
 
@@ -93,10 +101,11 @@ void make_table(int v[MAXCITY][MAXCONN], int org, struct train tv[]) {
     }
 }
 
-int calc_cost(int city) {
+struct result calc_cost(int city) {
     int a = 0, d = nconn-1;
     int stay;
     int c, min_c = INFINITE;
+    int min_city, min_start, min_end;
 
     while(1) {
         stay = (BIAS - rtrains[d].arv) - trains[a].arv;
@@ -107,17 +116,24 @@ int calc_cost(int city) {
         }
         c = from_station1[city][a+1] + from_station2[city][a+1] +
             to_station1[city][d+1] + to_station2[city][d+1];
-        if(c < min_c)
+        if(c < min_c) {
             min_c = c;
+            min_city = city;
+            min_start = trains[a].arv;
+            min_end = BIAS - rtrains[d].arv;
+        }
         a ++;
         if(a >= nconn) break;
     }
-    return min_c;
+    struct result res = {min_c, min_city, min_start, min_end};
+    return res;
 }
 
-int solve(void) {
+struct result solve(void) {
     int c;
     int cost, min_cost; 
+    struct result curr_result;
+    struct result min_result = {INFINITE, -1, -1, -1};
 
     prepare_data();
 
@@ -126,17 +142,17 @@ int solve(void) {
     make_table(to_station1, city_id(station1), rtrains);
     make_table(to_station2, city_id(station2), rtrains);
 
-    min_cost = INFINITE;
     for(c = 0; c < ncity; c++) {
-        cost = calc_cost(c);
-        if(cost < min_cost)
-            min_cost = cost;
+        curr_result = calc_cost(c);
+        if(curr_result.cost < min_result.cost) {
+            min_result = curr_result;
+        }
     }
 
-    if(min_cost >= INFINITE)
-        min_cost = 0;
-
-    return min_cost;
+    if(min_result.cost >= INFINITE) {
+        min_result.cost = 0;
+    }
+    return min_result;
 }
 
 int min(int a, int b) {
@@ -288,8 +304,17 @@ int main(int argc, char *argv[]) {
         // Apply time filtering (e.g., 8:00 AM to 6:00 PM)
         filter_connections_in_time_range(start, end);
 
-        int result = solve();
-        printf("%d\n", result);
+        struct result result = solve();
+        if (result.cost != 0) {
+            printf("%d %s: %02d:%02d - %02d:%02d\n",
+                   result.cost,
+                   city_name[result.station],
+                   result.start_time / 60, result.start_time % 60,
+                   result.end_time / 60, result.end_time % 60);
+        }
+        else {
+            printf("0\n");
+        }
 
         cleanup();
     }
